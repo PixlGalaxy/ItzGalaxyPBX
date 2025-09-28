@@ -15,4 +15,4 @@ RUN chmod +x /scripts/*.sh
 ENTRYPOINT ["/scripts/entrypoint.sh"]
 
 # Informative expose (mapping is in docker-compose)
-EXPOSE 5061/tcp 10000-20000/udp 443/tcp
+EXPOSE 5061/tcp 10000-10010/udp 443/tcp

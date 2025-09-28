@@ -33,3 +33,5 @@ services:
       - ./config/fail2ban:/etc/fail2ban
       - ./data:/data
       - ./logs:/var/log/asterisk
+      - ./data/mysql:/var/lib/mysql
+      - ./data/asterisk:/var/lib/asterisk
