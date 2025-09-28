@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+  itzgalaxypbx:
+    build: .
+    container_name: itzgalaxypbx
+    restart: unless-stopped
+    privileged: true
+
+    # Map your SIM7600 devices (adjust to your server)
+    devices:
+      - /dev/ttyUSB2:/dev/ttyUSB2   # AT / control
+      - /dev/ttyUSB3:/dev/ttyUSB3   # Audio (often this one)
+
+    ports:
+      - "${SIP_TLS_PORT}:${SIP_TLS_PORT}/tcp"                                 # SIP over TLS
+      - "${SIP_RTP_START}-${SIP_RTP_END}:${SIP_RTP_START}-${SIP_RTP_END}/udp" # (S)RTP media
+      - "8443:443/tcp"                                                       # FreePBX GUI (put behind reverse proxy)
+
+    environment:
+      - PBX_DOMAIN=${PBX_DOMAIN}
+      - SIP_TLS_PORT=${SIP_TLS_PORT}
+      - SIP_RTP_START=${SIP_RTP_START}
+      - SIP_RTP_END=${SIP_RTP_END}
+      - EXT_200_USER=${EXT_200_USER}
+      - EXT_200_PASS=${EXT_200_PASS}
+      - FREEPBX_ADMIN_USER=${FREEPBX_ADMIN_USER}
+      - FREEPBX_ADMIN_PASS=${FREEPBX_ADMIN_PASS}
+      - SLEEP_DEVICES=${SLEEP_DEVICES}
+
+    volumes:
+      - ./config/asterisk:/etc/asterisk
+      - ./config/fail2ban:/etc/fail2ban
+      - ./data:/data
+      - ./logs:/var/log/asterisk
