@@ -1,0 +1,63 @@
+name: Build and Push Docker Image for ItzGalaxyPBX
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  release:
+    types: [created]
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: 🚀 Display Startup Message
+        run: echo "🚀 Hello from Galaxy! | Building ItzGalaxyPBX…"
+
+      - name: 📂 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🐳 Set up QEMU (multi-arch emulation)
+        uses: docker/setup-qemu-action@v3
+
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔍 Prepare Repository Owner and Image Tags
+        id: vars
+        run: |
+          echo "REPOSITORY_OWNER=$(echo $GITHUB_REPOSITORY_OWNER | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          echo "IMAGE_NAME=itzgalaxypbx" >> $GITHUB_ENV
+
+      - name: 🔑 Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏗 Build (PR) or Build & Push (main/tags)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ghcr.io/${{ env.REPOSITORY_OWNER }}/${{ env.IMAGE_NAME }}:latest
+            ghcr.io/${{ env.REPOSITORY_OWNER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ github.ref_type == 'tag' && startsWith(github.ref_name, 'v') && format('ghcr.io/{0}/{1}:{2}', env.REPOSITORY_OWNER, env.IMAGE_NAME, github.ref_name) || '' }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.title=ItzGalaxyPBX
+            org.opencontainers.image.description=Asterisk + FreePBX + chan_dongle with secure, .env-driven defaults
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
